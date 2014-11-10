@@ -1,4 +1,4 @@
-<?php namespace App;
+<?php namespace Lycee;
 
 use Illuminate\Auth\UserTrait;
 use Illuminate\Database\Eloquent\Model;

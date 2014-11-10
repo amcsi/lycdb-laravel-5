@@ -1,8 +1,8 @@
-<?php namespace App\Http\Controllers;
+<?php namespace Lycee\Http\Controllers;
 
-use App\Http\Requests\LoginRequest;
+use Lycee\Http\Requests\LoginRequest;
 use Illuminate\Contracts\Auth\Guard;
-use App\Http\Requests\RegisterRequest;
+use Lycee\Http\Requests\RegisterRequest;
 
 class AuthController extends Controller {
 

@@ -1,4 +1,4 @@
-<?php namespace App\Http\Controllers;
+<?php namespace Lycee\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\PasswordBroker;
