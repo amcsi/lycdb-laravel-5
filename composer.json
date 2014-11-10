@@ -5,6 +5,8 @@
 	"license": "MIT",
 	"type": "project",
 	"require": {
+        "amcsi/amysql": "~1.1",
+        "zendframework/zend-dom": "~2.3",
 		"laravel/framework": "~5.0"
 	},
 	"require-dev": {
