@@ -12,6 +12,7 @@ namespace Lycee\Importer;
  * 
  **/
 use Zend\Dom\Query;
+use Illuminate\Contracts\Cache\Repository as Cache;
 
 class Lycee {
 
@@ -25,39 +26,21 @@ class Lycee {
      * @var mixed
      * @access protected
      */
-    protected $_cache;
-    protected $_amysql;
-    protected $_serviceManager;
+    protected $cache;
+    protected $amysql;
 
     public $setsTableName = 'lycdb_sets';
     public $cardsTableName = 'lycdb_cards';
 
-    public function __construct() {
-    }
-
-    public function setServiceManager(\Zend\ServiceManager\ServiceManager $serviceManager) {
-        $this->_serviceManager = $serviceManager;
-    }
-
-    public function getAMysql() {
-        if (!$this->_amysql) {
-            $this->_amysql = $this->_serviceManager->get('amysql');
-        }
-        return $this->_amysql;
-    }
-
-    public function getCache() {
-        if (!$this->_cache) {
-            $zendCache = $this->_serviceManager->get('Lycee\Cache');
-            $cacheHelper = new Zend\CacheHelper($zendCache);
-            $this->_cache = $cacheHelper;
-        }
-        return $this->_cache;
+    public function __construct(\AMysql $amysql, Cache $cache)
+    {
+        $this->amysql = $amysql;
+        $this->cache = $cashe;
     }
 
     public function import() {
         $sets = $this->getSets();
-        $amysql = $this->getAMysql();
+        $amysql = $this->amysql;
         $setDatas = array ();
         foreach ($sets as $set) {
             $setData = array ();
@@ -90,7 +73,7 @@ class Lycee {
     }
 
     public function importSetByArray($arr) {
-        $amysql = $this->getAMysql();
+        $amysql = $this->amysql;
         printf("Importing set %s ...<br>\n", $arr['name']);
         ob_flush();
         $qs = $arr['qs'];
@@ -100,7 +83,7 @@ class Lycee {
         $options['lifetime'] = 60 * 60 * 24 * 265 * 5; // 5 years.
         $options['cache_tags'] = array ($this->websiteVersionTag);
         if ($arr['listsCards']) {
-            $options['alternate_cache'] = 2;
+            $options['alternatecache'] = 2;
         }
         $html = $this->request($arr['path'], $qs, $options);
 
@@ -595,7 +578,7 @@ class Lycee {
     }
 
     public function requestFullUrl($url, $params = array (), $options = array ()) {
-        $cache = $this->getCache();
+        $cache = $this->cache;
 
         $useCache = !isset($options['use_cache']) || empty($options['use_cache']); // use cache by default.
         if (!$useCache || !($result = $cache->getCachedResult($url, $params, $options))) {

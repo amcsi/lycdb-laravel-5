@@ -140,6 +140,7 @@ return [
 		'Illuminate\Validation\ValidationServiceProvider',
 		'Illuminate\View\ViewServiceProvider',
 
+		'Lycee\Providers\IocServiceProvider',
 	],
 
 	/*
