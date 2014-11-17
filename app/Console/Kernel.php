@@ -12,6 +12,7 @@ class Kernel extends ConsoleKernel {
 	 */
 	protected $commands = [
 		'Lycee\Console\Commands\InspireCommand',
+		'Lycee\Console\ImportCardsCommand',
 	];
 
 	/**
