@@ -7,6 +7,7 @@ class CacheHelper
 {
 
     protected $cache;
+    private $defaultMinutes = 60 * 24 * 365 * 10;
 
     public function __construct(CacheRepository $cache)
     {
@@ -25,7 +26,7 @@ class CacheHelper
     {
         $cache = $this->cache;
         $cacheKey = $this->getCacheKey($method, $params, $options);
-        $ret = $cache->put($cacheKey, $result);
+        $ret = $cache[$cacheKey] = $result;
 
         return $ret;
     }

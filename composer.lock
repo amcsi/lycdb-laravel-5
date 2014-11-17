@@ -4,20 +4,20 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "efd288feef6741d0ef308b7ac15160f8",
+    "hash": "3c6f38f87c8b82ea2c81286373939da7",
     "packages": [
         {
             "name": "amcsi/amysql",
-            "version": "v1.1.4",
+            "version": "dev-onDuplicateKey",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amcsi/amysql.git",
-                "reference": "e306e6c6e3631ce8c17b418a6292310f73f157d5"
+                "reference": "803f4910b5cb88cf2af8f82d21359fb08871d352"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amcsi/amysql/zipball/e306e6c6e3631ce8c17b418a6292310f73f157d5",
-                "reference": "e306e6c6e3631ce8c17b418a6292310f73f157d5",
+                "url": "https://api.github.com/repos/amcsi/amysql/zipball/803f4910b5cb88cf2af8f82d21359fb08871d352",
+                "reference": "803f4910b5cb88cf2af8f82d21359fb08871d352",
                 "shasum": ""
             },
             "require": {
@@ -48,7 +48,7 @@
                 "mysql",
                 "mysqli"
             ],
-            "time": "2014-09-25 16:48:49"
+            "time": "2014-11-17 05:52:28"
         },
         {
             "name": "classpreloader/classpreloader",
@@ -2218,6 +2218,57 @@
             "time": "2014-10-04 10:04:20"
         },
         {
+            "name": "raveren/kint",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/raveren/kint.git",
+                "reference": "593b1c3af298204cf92780ba62985e479fb62b74"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/raveren/kint/zipball/593b1c3af298204cf92780ba62985e479fb62b74",
+                "reference": "593b1c3af298204cf92780ba62985e479fb62b74",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.2.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.9-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "Kint.class.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Rokas Šleinius",
+                    "homepage": "https://github.com/raveren"
+                },
+                {
+                    "name": "Contributors",
+                    "homepage": "https://github.com/raveren/kint/contributors"
+                }
+            ],
+            "description": "Kint - debugging helper for PHP developers",
+            "homepage": "https://github.com/raveren/kint",
+            "keywords": [
+                "debug",
+                "kint",
+                "php"
+            ],
+            "time": "2014-09-08 13:50:01"
+        },
+        {
             "name": "sebastian/comparator",
             "version": "dev-master",
             "source": {
@@ -2584,7 +2635,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "amcsi/amysql": 20
+    },
     "prefer-stable": false,
     "platform": [],
     "platform-dev": []

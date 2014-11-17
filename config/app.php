@@ -141,6 +141,7 @@ return [
 		'Illuminate\View\ViewServiceProvider',
 
 		'Lycee\Providers\IocServiceProvider',
+		'Lycee\Providers\ArtisanServiceProvider',
 	],
 
 	/*
