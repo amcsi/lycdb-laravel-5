@@ -28,9 +28,14 @@ class Lycee {
      */
     protected $cache;
     protected $amysql;
+    protected $_serviceManager;
+    protected $_currentCards;
+    protected $_raritiesAndSets = array ();
+    protected $_sets;
 
     public $setsTableName = 'lycdb_sets';
     public $cardsTableName = 'lycdb_cards';
+    public $cardsConnectSetsTableName = 'lycdb_cards_sets_connect';
 
     public function __construct(\AMysql $amysql, Cache $cache)
     {
@@ -41,6 +46,12 @@ class Lycee {
     public function import() {
         $sets = $this->getSets();
         $amysql = $this->amysql;
+
+        $stmt = $amysql->prepare("SELECT * FROM $this->cardsTableName");
+        $stmt->execute();
+        $currentCards = $stmt->fetchAllAssoc('cid');
+        $this->_currentCards = $currentCards;
+
         $setDatas = array ();
         foreach ($sets as $set) {
             $setData = array ();
@@ -49,6 +60,7 @@ class Lycee {
             $setDatas[] = $setData;
         }
         try {
+            $this->_sets = $setDatas;
             $stmt = $amysql->newStatement();
             $stmt->insertReplaceOnDuplicateKeyUpdate('INSERT', $this->setsTableName, $setDatas);
             $stmt->execute();
@@ -57,6 +69,11 @@ class Lycee {
             trigger_error($e);
         }
         $met = ini_get('max_execution_time');
+        $this->importAllCards();
+        echo "Done importing.";
+    }
+
+    public function importSetsByArrayOfSets($sets) {
         foreach ($sets as $set) {
             try {
                 set_time_limit($met);
@@ -69,27 +86,81 @@ class Lycee {
                 trigger_error($e);
             }
         }
-        echo "Done importing.";
+    }
+
+    public function importAllCards() {
+        $arr = array ();
+        $arr['page_out'] = 50000;
+        $arr['path'] = 'index.cgi';
+        $arr['qs'] = array ();
+        $stats = $this->importCardsByArray($arr);
+        printf("Imported all cards.<br>\nFound: %d<br>\nalternate: %d<br>\ninserted: %d<br>\nupdated %s<br>\n<br>\n",
+            $stats['cardCount'], $stats['alternateCount'], $stats['insertedCount'], $stats['updatedCount']
+        );
+
+        $datas = array ();
+        $tableName = $this->cardsConnectSetsTableName;
+
+        $map = array ();
+        foreach ($this->_sets as $set) {
+            $name = $set['name_jp'];
+            $map[$name] = $set['ext_id'];
+        }
+
+        foreach ($this->_raritiesAndSets as $cid => $editions) {
+            foreach ($editions as $val) {
+                $setName = $val['set'];
+                $setExtId = isset($map[$setName]) ? $map[$setName] : 0;
+                $data = array (
+                    'cid' => $cid,
+                    'extended_cid' => $val['extendedCid'],
+                    'rarity' => $val['rarity'],
+                    'set_ext_id' => $setExtId,
+                    'set_name' => $val['set'],
+                );
+                $datas[] = $data;
+            }
+        }
+;
+        if ($datas) {
+            $amysql = $this->amysql;
+            $stmt = $amysql->newStatement();
+            $stmt->insertReplace('INSERT IGNORE', $tableName, $datas);
+            $stmt->execute();
+        }
     }
 
     public function importSetByArray($arr) {
-        $amysql = $this->amysql;
         printf("Importing set %s ...<br>\n", $arr['name']);
-        ob_flush();
+        $stats = $this->importCardsByArray($arr);
+        printf("Set: %s<br>\ncards found: %d<br>\nalternate: %d<br>\ninserted: %d<br>\nupdated %s<br>\n<br>\n",
+            $arr['name'], $stats['cardCount'], $stats['alternateCount'], $stats['insertedCount'], $stats['updatedCount']
+        );
+    }
+
+    public function importCardsByArray($arr) {
+        $amysql = $this->amysql;
         $qs = $arr['qs'];
         $qs['page_out'] = 500;
         $qs['page_list'] = 2;
+        $qs['page_sort'] = 2;
+        if (isset($arr['page_out'])) {
+            $qs['page_out'] = $arr['page_out'];
+        }
         $options = array ();
         $options['lifetime'] = 60 * 60 * 24 * 265 * 5; // 5 years.
         $options['cache_tags'] = array ($this->websiteVersionTag);
         if ($arr['listsCards']) {
             $options['alternatecache'] = 2;
         }
-        $html = $this->request($arr['path'], $qs, $options);
-
-        $domQuery = new \Zend\Dom\Query($html);
-        $selector = '#card_list_main div.m_15 > *';
-        $selectEls = $domQuery->execute($selector);
+        set_time_limit(500);
+        if (!isset($arr['name']) && file_exists('./data/cache/lycee/all_cards.html')) {
+            $html = fopen('./data/cache/lycee/all_cards.html', 'r');
+        }
+        else {
+            set_time_limit(200);
+            $html = $this->request($arr['path'], $qs, $options);
+        }
 
         $tableArray = array ();
 
@@ -98,49 +169,139 @@ class Lycee {
         /**
          * Cards in the HTML are usually 4 tables separated by a br. 2 brs mark the end. 
          */
-        foreach ($selectEls as $selectEl) {
-            if ('table' == $selectEl->tagName) {
-                $tableArray[] = $selectEl;
-            }
-            else if ('br' == $selectEl->tagName) {
-                if ($tableArray) {
+        if (is_resource($html)) {
+            $buffer = array ();
+
+            $started = false;
+
+            $cardStart = '<table width="0" border="0" cellspacing="0" cellpadding="0" class="m_17">';
+            $cardEnd = '</table><br />';
+            while (false !== ($line = fgets($html))) {
+                if (false !== strpos($line, $cardStart)) {
+                    $started = true;
+                }
+                if ($started) {
+                    $buffer[] = $line;
+                }
+                if ($started && false !== strpos($line, $cardEnd)) {
+                    $started = false;
+                    $cardHtml = join('', $buffer);
+                    $buffer = array ();
+                    $cardHtml = "<?xml encoding=\"utf-8\">\n<!doctype html>\n<html><head><meta charset='utf-8'></head><body>\n" .
+                        '<div id="root">' . mb_convert_encoding($cardHtml, 'utf-8', array ('EUC_JP')) . '</div></body></html>';
+                    $doc = new \DomDocument('1.0', 'utf-8');
+                    @$doc->loadHtml($cardHtml);
+                    $root = $doc->getElementById('root');
+                    $children = $root->childNodes;
+                    $tableArray = array ();
+                    foreach ($children as $child) {
+                        if ('table' == $child->tagName) {
+                            $tableArray[] = $child;
+                        }
+                    }
+
                     $card = $this->getCardByTablesList2($tableArray);
                     $cards[] = $card;
                 }
-                $tableArray = array ();
+            }
+        }
+        else {
+            $domQuery = new \Zend\Dom\Query($html);
+            $selector = '#card_list_main div.m_15 > *';
+            $selectEls = $domQuery->execute($selector);
+
+            foreach ($selectEls as $selectEl) {
+                if ('table' == $selectEl->tagName) {
+                    $tableArray[] = $selectEl;
+                }
+                else if ('br' == $selectEl->tagName) {
+                    if ($tableArray) {
+                        $card = $this->getCardByTablesList2($tableArray);
+                        $cards[] = $card;
+                    }
+                    $tableArray = array ();
+                }
             }
         }
         $datas = array ();
-        $neededData = array (
+        $baseNeededData = array (
             'cid', 'name_jp', 'ex', 'is_snow', 'is_moon', 'is_lightning', 'is_flower', 'is_sun',
             'cost_snow', 'cost_moon', 'cost_lightning', 'cost_flower', 'cost_sun', 'cost_star',
             'ability_desc_jp', 'comments_jp', 'import_errors', 'type', 'ability_cost_jp', 'ability_name_jp',
             'conversion_jp', 'basic_ability_flags', 'basic_abilities_jp', 'is_male', 'is_female', 'import_errors',
-            'ap', 'dp', 'sp', 'position_flags',
+            'ap', 'dp', 'sp', 'position_flags', 'card_hash', 'lang_hash', 'import_card_hash',
         );
+        $hashColumns = Model::getHashColumns();
+        $langHashColumns = Model::getLangHashColumns();
+
+        $changes = array (); // data to go into updates. Could just be a change of a hash.
+        
         $cardCount = count($cards);
         $alternateCount = 0;
+
+        $insertDatas = array ();
+
         foreach ($cards as $card) {
+            $neededData = $baseNeededData;
+            $cid = $card->getCidText();
+            if (!isset($this->_raritiesAndSets[$cid])) {
+                $this->_raritiesAndSets[$cid] = array ();
+            }
+            $ras = array (
+                'extendedCid' => $card->fullCidText,
+                'rarity' => $card->rarity,
+                'set' => $card->getJapaneseSetName()
+            );
+            $this->_raritiesAndSets[$cid][] = $ras;
+
             if ($card->alternate) {
                 $alternateCount++;
                 continue;
             }
             $data = $card->toDbData();
+            $data['import_card_hash'] = $data['card_hash'];
+
             $dataToUse = array ();
-            if ($data['locked']) {
-                continue;
-            }
-            foreach ($neededData as $key) {
-                if (!array_key_exists($key, $data)) {
-                    trigger_error("Missing key: $key. Aborting set: $arr[extId]", E_USER_WARNING);
-                    return;
+
+            $totallyNewCard = !isset($this->_currentCards[$cid]);
+            $changed = false;
+            if (!$totallyNewCard) {
+                $cCard = $this->_currentCards[$cid];
+                // treat the card as changed if the card_hash's do not match
+                $changed = $data['card_hash'] != $cCard['card_hash'] || !$cCard['import_card_hash'];
+                if ($cCard['locked']) {
+                    // except if the card is locked.
+                    $changed = false;
+                    if ($cCard['import_card_hash'] != $data['card_hash']) {
+                        // but if the locked card's import_card_hash would differ from the newly imported card data's
+                        // card_hash, change the card, but only the import_card_hash.
+                        $changed = true;
+                        $neededData = array ('import_card_hash');
+                    }
                 }
-                else {
-                    $dataToUse[$key] = $data[$key];
+                $changes[$cid] = $changed;
+            }
+
+            if ($changed || $totallyNewCard) {
+                foreach ($neededData as $key) {
+                    if (!array_key_exists($key, $data)) {
+                        $setId = isset($arr['extId']) ? $arr['extId'] : '[not a set]';
+                        trigger_error("Missing key: $key. Aborting cards. Set id: $setId", E_USER_WARNING);
+                        return;
+                    }
+                    else {
+                        $dataToUse[$key] = $data[$key];
+                    }
+                }
+                if ($totallyNewCard) {
+                    $dataToUse['insert_date'] = $amysql->expr('CURRENT_TIMESTAMP');
+                    $insertDatas[] = $dataToUse;
+                }
+                else if ($changed) {
+                    $datas[] = $dataToUse;
                 }
             }
-            $dataToUse['insert_date'] = $amysql->expr('CURRENT_TIMESTAMP');
-            $datas[] = $dataToUse;
+            ob_flush();
         }
 
         if (!$cards) {
@@ -151,12 +312,14 @@ class Lycee {
         $insertCount = 0;
         $updatedCount = 0;
 
-        if ($datas) {
+        if ($datas || $insertDatas) {
             try {
-                $stmt = $amysql->newStatement();
-                $stmt->insertReplace('INSERT IGNORE', $this->cardsTableName, $datas);
-                $stmt->execute();
-                $insertCount = $affectedRows = $stmt->affectedRows;
+                if ($insertDatas) {
+                    $stmt = $amysql->newStatement();
+                    $stmt->insertReplace('INSERT IGNORE', $this->cardsTableName, $insertDatas);
+                    $stmt->execute();
+                    $insertCount = $affectedRows = $stmt->affectedRows;
+                }
             }
             catch (\Exception $e) {
                 trigger_error("Couldn't update some rows. $e");
@@ -176,9 +339,14 @@ class Lycee {
             }
         }
 
-        printf("Set: %s<br>\ncards found: %d<br>\nalternate: %d<br>\ninserted: %d<br>\nupdated %s<br>\n<br>\n",
-            $arr['name'], $cardCount, $alternateCount, $insertCount, $updatedCount
+        $stats = array (
+            'cardCount' => $cardCount,
+            'alternateCount' => $alternateCount,
+            'insertedCount' => $insertCount,
+            'updatedCount' => $updatedCount
         );
+
+        return $stats;
     }
 
     public function getCardByTablesList2(array $tableArray) {
@@ -210,7 +378,6 @@ class Lycee {
         else {
             $card->addError("Couldn't find card's ex");
         }
-
 
         /**
          * Card cost, position, ap, dp, sp, gender, rarity
@@ -338,6 +505,13 @@ class Lycee {
             $text = $this->toLycdbMarkup($this->getInnerHtml($thirdCells->item(2)), $toMarkupOptions);
             $card->setMainAbilityText($text);
         }
+
+        $fourthCells = $tableArray[3]->getElementsByTagName('td');
+
+        $setName = trim($fourthCells->item(3)->textContent);
+        $card->setName = $setName;
+        $isErrata = false !== strpos($this->getInnerHtml($fourthCells->item(5)), 'errata_icon');
+        $card->isErrata = $isErrata;
 
         return $card;
     }
@@ -593,11 +767,16 @@ class Lycee {
             $convertToUtf8 = $options['convertToUtf8'];
         }
         if ($convertToUtf8) {
-            $result = mb_convert_encoding($result, 'utf-8', array ('EUC_JP'));
-            $result = str_replace('charset=EUC-JP', 'charset=UTF-8', $result);
+            $this->convertHtmlDocToUtf8($result);
         }
         return $result;
         
+    }
+
+    public function convertHtmlDocToUtf8($result) {
+        $result = mb_convert_encoding($result, 'utf-8', array ('EUC_JP'));
+        $result = str_replace('charset=EUC-JP', 'charset=UTF-8', $result);
+        return $result;
     }
 
     protected function _requestFullUrl($url, $params = array (), $options = array ()) {
@@ -606,4 +785,3 @@ class Lycee {
 		return $result;
     }
 }
-
