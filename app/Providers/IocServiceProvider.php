@@ -8,6 +8,22 @@ class IocServiceProvider extends ServiceProvider {
     {
         $app = $this->app;
 
+        $app->singleton('consoleLogger', function ($app) {
+            $logger = new \Monolog\Logger('Console logger');
+            $handler = new \Monolog\Handler\StreamHandler('php://stdout');
+            $logger->pushHandler($handler);
+
+            return $logger;
+        });
+
+        $app->singleton('Lycee\Importer\Lycee\Importer', function ($app) {
+            $consoleLogger = $app->make('consoleLogger');
+            $params = [
+                'logger' => $consoleLogger,
+            ];
+            return $app->build('Lycee\Importer\Lycee\Importer', $params);
+        });
+
         $app->singleton('Lycee\Zend\CacheHelper', function ($app) {
             $cachePath = storage_path() . '/framework/cache/lycee-tcg.com';
             $storageParams = [

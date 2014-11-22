@@ -30,12 +30,12 @@ class CreateLycdbDatabase {
             $table->tinyInteger('is_flower');
             $table->tinyInteger('is_lightning');
             $table->tinyInteger('is_sun');
-            $table->unsignedInteger('cost_snow');
-            $table->unsignedInteger('cost_moon');
-            $table->unsignedInteger('cost_flower');
-            $table->unsignedInteger('cost_lightning');
-            $table->unsignedInteger('cost_sun');
-            $table->unsignedInteger('cost_star');
+            $table->integer('cost_snow');
+            $table->integer('cost_moon');
+            $table->integer('cost_flower');
+            $table->integer('cost_lightning');
+            $table->integer('cost_sun');
+            $table->integer('cost_star');
             $table->string('ability_desc_jp', 1000);
             $table->string('ability_desc_en', 1000);
             $table->string('ability_cost_jp', 200);
@@ -47,8 +47,8 @@ class CreateLycdbDatabase {
             $table->tinyInteger('ap');
             $table->tinyInteger('dp');
             $table->tinyInteger('sp');
-            $table->unsignedInteger('position_flags');
-            $table->unsignedInteger('basic_ability_flags');
+            $table->integer('position_flags');
+            $table->integer('basic_ability_flags');
             $table->string('basic_abilities_jp', 200);
             $table->string('basic_abilities_en', 200);
             $table->tinyInteger('is_male');
@@ -75,7 +75,7 @@ class CreateLycdbDatabase {
             $table->string('cid', 10);
             $table->increments('extended_cid', 10);
             $table->string('rarity', 10);
-            $table->unsignedInteger('set_ext_id');
+            $table->integer('set_ext_id');
             $table->string('set_name', 200);
         });
 
@@ -86,7 +86,7 @@ class CreateLycdbDatabase {
 
         Schema::create('lycdb_sets', function($table) {
             $table->increments('id');
-            $table->unsignedInteger('ext_id')->unique();
+            $table->integer('ext_id')->unique();
             $table->string('name_jp', 100);
             $table->string('name_en', 100);
         });

@@ -14,6 +14,7 @@ abstract class Card extends Lycee {
     public $alternate = '';
 
     protected $set;
+    public $setName;
     /**
      * @var array
      * @access protected
@@ -25,6 +26,7 @@ abstract class Card extends Lycee {
     protected $comments;
 
     public $setExtId;
+    public $isErrata;
 
     protected $_errors = array ();
     
@@ -40,7 +42,7 @@ abstract class Card extends Lycee {
     
     public function __call($name, $args) {
         if (substr($name, 0, 3) == 'get') {
-            $prop = lcfirst(substr(__call, 3));
+            $prop = lcfirst(substr($name, 3));
             if (property_exists(__CLASS__, $prop)) {
                 switch ($prop) {
                     case 'elementFlags':
@@ -236,12 +238,16 @@ abstract class Card extends Lycee {
         return $this->cidText;
     }
 
+    public function isLegal() {
+        return $this->rarity !== 'L';
+    }
+
     public function setCidText($cidText) {
         $this->fullCidText = $cidText;
         $cidPattern = "@\w+-\d+@";
         $success = preg_match($cidPattern, $cidText, $matches);
         $this->cidText = $matches[0];
-        $pattern = "@(\w+)-(\d+)([A-Z])?@";
+        $pattern = "@(\w+)-(\d+)([^\s\d]*)@";
         $success = preg_match($pattern, $cidText, $matches);
         if ($success) {
             $this->cid = intval($matches[2], 10);
@@ -301,6 +307,11 @@ abstract class Card extends Lycee {
         $data['is_male']            = 0;
         $data['is_female']            = 0;
         $data['locked']            = 0;
+        Model::amendWithHashData($data);
         return $data;
+    }
+
+    public function getJapaneseSetName() {
+        return $this->setName;
     }
 }
