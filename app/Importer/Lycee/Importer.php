@@ -218,10 +218,15 @@ class Importer {
         }
         else {
             $domQuery = new \Zend\Dom\Query($html);
-            $selector = '#card_list_main div.m_15 > *';
+            $selector = '#card_list_main div.m_15';
+            ini_set('memory_limit', '900M');
             $selectEls = $domQuery->execute($selector);
+            $selectEls = $selectEls[0]->childNodes;
 
             foreach ($selectEls as $selectEl) {
+                if (!$selectEl instanceof \DOMElement) {
+                    continue;
+                }
                 if ('table' == $selectEl->tagName) {
                     $tableArray[] = $selectEl;
                 }
