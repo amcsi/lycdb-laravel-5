@@ -102,9 +102,14 @@ class Importer {
         ini_set('default_socket_timeout', 2000);
         $stats = $this->importCardsByArray($arr);
         ini_set('default_socket_timeout', $defaultSocketTimeout);
-        printf("Imported all cards.<br>\nFound: %d<br>\nalternate: %d<br>\ninserted: %d<br>\nupdated %s<br>\n<br>\n",
-            $stats['cardCount'], $stats['alternateCount'], $stats['insertedCount'], $stats['updatedCount']
+        $text = sprintf(
+            "Imported all cards.\nFound: %d\nalternate: %d\ninserted: %d\nupdated %s\n",
+            $stats['cardCount'],
+            $stats['alternateCount'],
+            $stats['insertedCount'],
+            $stats['updatedCount']
         );
+        $this->logger->info($text);
 
         $datas = array ();
         $tableName = $this->cardsConnectSetsTableName;
@@ -139,10 +144,17 @@ class Importer {
     }
 
     public function importSetByArray($arr) {
-        printf("Importing set %s ...<br>\n", $arr['name']);
+        $this->logger->info(sprintf("Importing set %s ...", $arr['name']));
         $stats = $this->importCardsByArray($arr);
-        printf("Set: %s<br>\ncards found: %d<br>\nalternate: %d<br>\ninserted: %d<br>\nupdated %s<br>\n<br>\n",
-            $arr['name'], $stats['cardCount'], $stats['alternateCount'], $stats['insertedCount'], $stats['updatedCount']
+        $this->logger->info(
+            sprintf(
+                "Set: %s\ncards found: %d\nalternate: %d\ninserted: %d\nupdated %s\n",
+                $arr['name'],
+                $stats['cardCount'],
+                $stats['alternateCount'],
+                $stats['insertedCount'],
+                $stats['updatedCount']
+            )
         );
     }
 
@@ -322,7 +334,7 @@ class Importer {
 
         if (!$cards) {
             //trigger_error("No cards to insert or update.");
-            echo "<span class=\"error\">Url: " . $this->getFullUrl($arr['path'], $qs) . " " . print_r($arr, true) . "</span>";
+            $this->logger->error("Url: " . $this->getFullUrl($arr['path'], $qs) . " " . print_r($arr, true));
         }
 
         $insertCount = 0;
@@ -350,7 +362,9 @@ class Importer {
                 if ($amysql->affectedRows) {
                     $updatedCount++;
                     $amysql->update($this->cardsTableName, $updateDateData, 'cid = ?', $data['cid']);
-                    printf("Updated card: %s<br>\n", $data['cid']);
+                    $this->logger->info(
+                        sprintf("Updated card: %s\n", $data['cid'])
+                    );
                 }
             }
         }
