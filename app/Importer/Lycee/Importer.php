@@ -74,15 +74,13 @@ class Importer {
         catch (\AMysql_Exception $e) {
             trigger_error($e);
         }
-        $met = ini_get('max_execution_time');
-        $this->importAllCards();
-        echo "Done importing.";
+        $this->importSetsByArrayOfSets($sets);
+        $this->logger->info("Done importing.");
     }
 
     public function importSetsByArrayOfSets($sets) {
         foreach ($sets as $set) {
             try {
-                set_time_limit($met);
                 $this->importSetByArray($set);
             }
             catch (\AMysql_Exception $e) {
@@ -155,7 +153,7 @@ class Importer {
         $qs['page_sort'] = 2;
 
         // defaults
-        $qs['page_out'] = 500;
+        $qs['page_out'] = 5000;
 
         if (isset($arr['page_out'])) {
             $qs['page_out'] = $arr['page_out'];
