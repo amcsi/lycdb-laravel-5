@@ -1,7 +1,13 @@
 <?php namespace Lycee\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Monolog\Formatter\LineFormatter;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 
+/**
+ * Configures IoC container services
+ */
 class IocServiceProvider extends ServiceProvider {
 
     public function register()
@@ -9,8 +15,14 @@ class IocServiceProvider extends ServiceProvider {
         $app = $this->app;
 
         $app->singleton('consoleLogger', function ($app) {
-            $logger = new \Monolog\Logger('Console logger');
-            $handler = new \Monolog\Handler\StreamHandler('php://stdout');
+            $logger = new Logger('Console logger');
+            $handler = new StreamHandler('php://stdout');
+
+            // allow line breaks when logging
+            $format = "%level_name%: %message% %context% %extra%\n";
+            $formatter = new LineFormatter($format, null, true, true);
+
+            $handler->setFormatter($formatter);
             $logger->pushHandler($handler);
 
             return $logger;
