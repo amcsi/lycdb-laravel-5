@@ -60,7 +60,7 @@ return [
 			'password'  => getenv('MYSQL_PASS'),
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',
-			'prefix'    => '',
+			'prefix'    => 'lycdb_',
 		],
 
 		'pgsql' => [

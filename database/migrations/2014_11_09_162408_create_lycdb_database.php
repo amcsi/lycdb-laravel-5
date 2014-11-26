@@ -13,10 +13,10 @@ class CreateLycdbDatabase {
     {
 
         //
-        // NOTE -- lycdb_cards
+        // NOTE -- cards
         // --------------------------------------------------
 
-        Schema::create('lycdb_cards', function($table) {
+        Schema::create('cards', function($table) {
             $table->increments('id');
             $table->string('cid', 10)->unique();
             $table->string('name_jp', 100);
@@ -68,10 +68,10 @@ class CreateLycdbDatabase {
 
 
         //
-        // NOTE -- lycdb_cards_sets_connect
+        // NOTE -- cards_sets_connect
         // --------------------------------------------------
 
-        Schema::create('lycdb_cards_sets_connect', function($table) {
+        Schema::create('cards_sets_connect', function($table) {
             $table->string('cid', 10);
             $table->increments('extended_cid', 10);
             $table->string('rarity', 10);
@@ -81,10 +81,10 @@ class CreateLycdbDatabase {
 
 
         //
-        // NOTE -- lycdb_sets
+        // NOTE -- sets
         // --------------------------------------------------
 
-        Schema::create('lycdb_sets', function($table) {
+        Schema::create('sets', function($table) {
             $table->increments('id');
             $table->integer('ext_id')->unique();
             $table->string('name_jp', 100);
@@ -102,9 +102,9 @@ class CreateLycdbDatabase {
     public function down()
     {
 
-        Schema::drop('lycdb_cards');
-        Schema::drop('lycdb_cards_sets_connect');
-        Schema::drop('lycdb_sets');
+        Schema::drop('cards');
+        Schema::drop('cards_sets_connect');
+        Schema::drop('sets');
 
     }
 }
