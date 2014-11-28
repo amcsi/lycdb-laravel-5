@@ -1,0 +1,5 @@
+suites:
+    lycee_suite:
+        namespace: Lycee
+        psr4_prefix: Lycee
+        src_path: app
