@@ -15,5 +15,6 @@ elixir(function(mix) {
     mix.sass("bootstrap.scss")
        .routes()
        .events()
-       .phpUnit();
+       .phpUnit()
+        .phpSpec();
 });
