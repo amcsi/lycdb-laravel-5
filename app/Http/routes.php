@@ -10,8 +10,11 @@
 | and give it the Closure to execute when that URI is requested.
 |
 */
-
+/** @var Illuminate\Contracts\Routing\Registrar $router */
 $router->get('/', 'HomeController@index');
+
+$router->resource('search', 'SearchController');
+
 
 /*
 |--------------------------------------------------------------------------

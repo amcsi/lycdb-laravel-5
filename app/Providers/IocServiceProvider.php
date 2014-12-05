@@ -66,5 +66,11 @@ class IocServiceProvider extends ServiceProvider {
 
             return $amysql;
         });
+
+        $app->singleton('Lycee\Config\Elements', function ($app) {
+            $config = $app->make('config');
+
+            return new \Lycee\Config\Elements($config->get('lycee.elements'));
+        });
     }
 }

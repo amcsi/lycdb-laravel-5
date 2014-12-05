@@ -28,4 +28,11 @@ return [
 
 	'compiled' => storage_path().'/framework/views',
 
+    'shared_vars' => [
+        'google_analytics' => [
+            'code' => null, // google analytics code to override
+            'domain' => 'lycee-tcg.eu',
+        ],
+    ]
+
 ];

@@ -140,8 +140,13 @@ return [
 		'Illuminate\Validation\ValidationServiceProvider',
 		'Illuminate\View\ViewServiceProvider',
 
+        'Illuminate\Html\HtmlServiceProvider',
+
 		'Lycee\Providers\IocServiceProvider',
 		'Lycee\Providers\ArtisanServiceProvider',
+        'Lycee\Providers\SharedViewVarsProvider',
+        'Lycee\Providers\ViewHelpersProvider',
+        'Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider', // for PHPStorm Facade autocompletion
 	],
 
 	/*
@@ -200,6 +205,11 @@ return [
 		'Validator' => 'Illuminate\Support\Facades\Validator',
 		'View'      => 'Illuminate\Support\Facades\View',
 
+
+        'Form'=> 'Illuminate\Html\FormFacade',
+        'HTML'=> 'Illuminate\Html\HtmlFacade',
+
+        'Helper' => 'Lycee\Facade\Helper',
 	],
 
 ];
